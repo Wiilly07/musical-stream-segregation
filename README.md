@@ -1,5 +1,5 @@
 # Learning note-to-note affinity for voice segregation and melody line identification of symbolic music data
-This repository contains the implementation of the data-driven system to the solve voice segregation problem for symbolic music.
+This repository contains the implementation of the data-driven system to solve the voice segregation problem for symbolic music.
 You can read the full paper presented at ISMIR 2021 for further details.
 
 ## Abstract
