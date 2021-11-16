@@ -60,7 +60,7 @@ def train_one_epoch(model, augment, file_list, val_data, batch_size):
     X, y = data_pipe(file_list=file_list, augment=augment)
     model.fit(X, y, batch_size=batch_size, 
               epochs=1, verbose=2, validation_data=val_data)
-
+        
 def training(file_list, val_file_list, epochs, batch_size, aug, model_file=None):
     
     try:
@@ -81,17 +81,29 @@ def training(file_list, val_file_list, epochs, batch_size, aug, model_file=None)
         for i in range(t-1):
             hist = train_one_epoch(model=model, augment=aug, file_list=file_list[i*pile:(i+1)*pile], val_data=None, batch_size=batch_size)
         X_val, y_val = data_pipe(file_list=val_file_list, augment=False)
-        hist = train_one_epoch(model=model, augment=aug, file_list=file_list[(i+1)*pile:], val_data=(X_val, y_val), batch_size=batch_size)
+        #hist = train_one_epoch(model=model, augment=aug, file_list=file_list[(i+1)*pile:], val_data=(X_val, y_val), batch_size=batch_size)
+        loss, acc = model.evaluate(X_val, y_val)
+        
+    return model, acc
 
-    return model
+
+def training_util():    
+    train_list = [os.path.join(setting.train_folder, i) for i in os.listdir(setting.train_folder)]
+    val_list = [os.path.join(setting.val_folder, i) for i in os.listdir(setting.val_folder)]
+
+    model_trained, valid_acc = training(file_list=train_list, val_file_list=val_list, 
+                                        epochs=1, batch_size=setting.batch_size, 
+                                        aug=True,  model_file=setting.model_file)
+    return model_trained, valid_acc
+
 
 if __name__ == '__main__':
-    with open(setting.log_file, 'a') as f:
-        with redirect_stdout(f):
-            train_list = [os.path.join(setting.train_folder, i) for i in os.listdir(setting.train_folder)]
-            val_list = [os.path.join(setting.val_folder, i) for i in os.listdir(setting.val_folder)]
-            
-            model_trained = training(file_list=train_list, val_file_list=val_list, 
-                                     epochs=1, batch_size=setting.batch_size, 
-                                     aug=True,  model_file=setting.model_file)
-            model_trained.save(setting.model_file)
+    best_acc = 0
+    with open(setting.log_file, 'a') as fp:
+        for i in range(setting.epoch):
+            print(f'epoch: {i+1}', file=fp)
+            model_trained, valid_acc = training_util()
+            if valid_acc >= best_acc:
+                model_trained.save(setting.model_file)
+                best_acc = valid_acc
+            print(f'valid acc: {valid_acc}, best acc: {best_acc}\n', file=fp)
